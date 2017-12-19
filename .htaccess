@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine on
+    RewriteBase /
+    RewriteCond $1 !^(index\.php|template|vendors|bootstrap|demo|images|swf|third_party|uploads|js|css|assets|fonts|font-awesome|robots\.txt|$)
+    RewriteRule ^(.*)$ /index.php/$1 [L,QSA]
+</IfModule>
+
+<IfModule mod_env.c>
+    SetEnv CI_ENV development
+</IfModule>
