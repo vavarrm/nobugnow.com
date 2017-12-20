@@ -27,8 +27,107 @@ class Api extends CI_Controller {
 			$parames = $e->getParams();
 			$parames['class'] = __CLASS__;
 			$parames['function'] = __function__;
-			var_dump($parames);
 			$this->myLog->error_log($parames);
+		}
+		
+		$this->response($output);
+	}
+	
+	public function registered()
+	{
+		$output['status'] = 100;
+		$output['body'] =array();
+		$output['title'] ='註冊下級用戶';
+		
+		try 
+		{
+			if(
+				$this->request['name']	==""|| 
+				$this->request['account']	==""|| 
+				$this->request['passwd']	=="" ||
+				$this->request['superior']	=="" 
+			){
+				$array = array(
+					'message' 	=>'reponse 必傳參數為空' ,
+					'type' 		=>'api' ,
+					'status'	=>'002'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if(strlen($this->request['name']) <8 || strlen($this->request['name'])>12){
+				$array = array(
+					'message' 	=>'暱稱長度為8~12位' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if(strlen($this->request['account']) <8 || strlen($this->request['account'])>12){
+				$array = array(
+					'message' 	=>'帳號長度為8~12位' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if(strlen($this->request['passwd']) <8 || strlen($this->request['passwd'])>12){
+				$array = array(
+					'message' 	=>'密碼長度為8~12位' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if($this->request['name'] == $this->request['account']){
+				$array = array(
+					'message' 	=>'使用者名稱不能與帳號相同' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if(intval($this->request['superior']) <=0){
+				$array = array(
+					'message' 	=>'無法註冊總代號' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			$ary =array(
+				'superior_id'	=>$this->request['superior'],
+				'u_name'		=>$this->request['name'],
+				'u_account'		=>$this->request['account'],
+				'u_passwd'		=>md5($this->request['passwd']),
+			);
+			
+			$this->user->insert($ary);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$this->myLog->error_log($parames);
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
 		}
 		
 		$this->response($output);
