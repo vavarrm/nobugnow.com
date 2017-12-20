@@ -7,7 +7,9 @@ class Api extends CI_Controller {
 	
 	public function __construct() 
 	{
-		parent::__construct();	
+		parent::__construct();
+		var_dump($_SERVER);
+		exit;		
 		$this->request = json_decode(trim(file_get_contents('php://input'), 'r'), true);
 		$this->load->model('User_Model', 'user');
 		$this->load->model('Log_Model', 'myLog');
