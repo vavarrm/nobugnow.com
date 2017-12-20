@@ -112,6 +112,19 @@ class Api extends CI_Controller {
 				throw $MyException;
 			}
 			
+			$accountIsExist = $this->user->accountIsExist($this->request['account']);
+			if($accountIsExist ==1)
+			{
+				$array = array(
+					'message' 	=>'使用者帳號已存在' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
 			$ary =array(
 				'superior_id'	=>$this->request['superior'],
 				'u_name'		=>$this->request['name'],
