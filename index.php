@@ -313,7 +313,7 @@ switch (ENVIRONMENT)
  * And away we go...
  */
 require_once BASEPATH.'core/CodeIgniter.php';
-class myException extends Exception {
+class MyException extends Exception {
 
     private $params;
 

@@ -9,6 +9,8 @@ class Api extends CI_Controller {
 	{
 		parent::__construct();	
 		$this->request = json_decode(trim(file_get_contents('php://input'), 'r'), true);
+		$this->load->model('User_Model', 'user');
+		$this->load->model('Log_Model', 'myLog');
     }
 	
 	public function test()
@@ -19,10 +21,14 @@ class Api extends CI_Controller {
 		
 		try 
 		{
-		}catch(Exception $e)
+			$this->user->insert();
+		}catch(MyException $e)
 		{
-			$output['status'] = $status ;
-			$output['message'] = $e->getMessage();
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			var_dump($parames);
+			$this->myLog->error_log($parames);
 		}
 		
 		$this->response($output);
