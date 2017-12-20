@@ -6,7 +6,7 @@
 </IfModule>
 
 <IfModule mod_env.c>
-    SetEnv CI_ENV production
+    SetEnv CI_ENV development
     SetEnv DB_PASSWORD 1234qwer
     SetEnv DB_USERNAME ag
     SetEnv DB_NAME third_platform
