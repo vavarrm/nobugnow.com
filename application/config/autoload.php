@@ -63,6 +63,8 @@ $autoload['packages'] = array();
 $autoload['libraries'] = array(
 	'Mysmarty' =>'smarty', 
 	'MyFunc'=>'myfunc', 
+	'MyToken'=>'token', 
+	'session'
 );
 
 /*
