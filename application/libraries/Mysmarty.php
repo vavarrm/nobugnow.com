@@ -41,7 +41,7 @@ class Mysmarty
 	}
 
 	
-	public function displayFrame($tpl="")
+	public function displayFrame($frame='Frontend/frame.tpl',$tpl="")
 	{
 		$website = $this->CI->config->item('website');
 		$this->assign(array(
@@ -49,7 +49,7 @@ class Mysmarty
 			'randseed'	=>$this->randseed,
 			'website'	=>$website
 		));
-		$this->smarty->display('Frontend/frame.tpl');
+		$this->smarty->display($frame);
 	}
 	
 	public function assign($var)
