@@ -11,7 +11,7 @@
 		
 		public function getBalance($uid)
 		{
-			$sql ="SELECT IFNULL(SUM(ua_value),0) as balance FROM user_account WHERE ua_from =?";
+			$sql ="SELECT IFNULL(SUM(ua_value),0) as balance FROM user_account WHERE ua_to =?";
 			$bind = array(
 				$uid
 			);
@@ -138,7 +138,7 @@
 		
 		public function insert($ary)
 		{
-			$sql="	INSERT INTO user(superior_id,u_name,u_account,u_passwd,u_add_datetime)
+			$sql="	INSERT INTO user(u_superior_id	,u_name,u_account,u_passwd,u_add_datetime)
 					VALUES(?,?,?,?,NOW())";
 			$bind = array(
 				$ary['superior_id'],
@@ -160,7 +160,6 @@
 				$MyException->setParams($array);
 				throw $MyException;
 			}
-			// var_dump(); 
 		}
 	}
 ?>

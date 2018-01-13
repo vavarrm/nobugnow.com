@@ -14,6 +14,7 @@ class Api extends CI_Controller {
 		$get = $this->input->get();
 		$this->load->model('User_Model', 'user');
 		$this->load->model('Log_Model', 'myLog');
+		$this->load->model('Announcemet_Model', 'announcemet');
 		$this->request = json_decode(trim(file_get_contents('php://input'), 'r'), true);
 		
 		$output['status'] = 100;
@@ -21,7 +22,8 @@ class Api extends CI_Controller {
 		$output['title'] ='';
 		$gitignore =array(
 			'login',
-			'logout'
+			'logout',
+			'registered'
 		);		
 		
 		try 
@@ -81,6 +83,31 @@ class Api extends CI_Controller {
 			exit;
 		}
     }
+	
+	public function getAnnouncemetList()
+	{
+		
+		$output['status'] = 100;
+		$output['body'] =array();
+		$output['title'] ='取得公告列表';
+		$output['message'] = '成功取得';
+		$ary['limit'] = (isset($this->request['limit']))?$this->request['limit']:5;
+		$ary['p'] = (isset($this->request['p']))?$this->request['p']:1;
+		try 
+		{
+			$output['body'] = $this->announcemet->getList($ary);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+			$this->myLog->error_log($parames);
+		}
+		
+		$this->response($output);
+	}
 	
 	public function setUserPassword()
 	{
