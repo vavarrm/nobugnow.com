@@ -8,6 +8,61 @@
 			$this->load->database();
 		}
 		
+		public function getRegisteredLink($u_id)
+		{
+			
+		}
+		
+		public function addRegisteredLink($u_id)
+		{
+			$output = array(
+				'affected_rows'	=>0,
+				'rl_id'	=>''
+			);
+			try 
+			{
+				$user = $this->getUsetByID($u_id);
+				if(empty($user))
+				{
+					$MyException = new MyException();
+					$array = array(
+						'message' 	=>'使用者不存在' ,
+						'type' 		=>'db' ,
+						'status'	=>'999'
+					);
+					
+					$MyException->setParams($array);
+					throw $MyException;
+				}
+			}catch(MyException $e)
+			{
+				throw $e;
+				return false;
+			}
+			
+			$sql="INSERT INTO registered_link (u_id) VALUES(?)";
+			$bind = array(
+				$u_id
+			);
+			$query = $this->db->query($sql, $bind);
+			$error = $this->db->error();
+			if($error['message'] !="")
+			{
+				$MyException = new MyException();
+				$array = array(
+					'message' 	=>$error['message'] ,
+					'type' 		=>'db' ,
+					'status'	=>'001'
+				);
+				
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			$insert_id = $this->db->insert_id();
+			$output['rl_id'] = sprintf('%08d',$insert_id) ;
+			$output['affected_rows'] = $this->db->affected_rows() ;
+			return $output;
+		}
 		
 		public function setBankInfo($ary=array())
 		{
@@ -153,6 +208,32 @@
 			$row =  $query->row_array();
 			$query->free_result();
 			return $row;
+		}
+		
+		public function getUserBankInfoByID($u_id)
+		{
+			$sql="SELECT * FROM user_bank_info WHERE ub_u_id = ?";
+			$bind = array(
+				$u_id
+			);
+			$query = $this->db->query($sql, $bind);
+
+			$error = $this->db->error();
+			if($error['message'] !="")
+			{
+				$MyException = new MyException();
+				$array = array(
+					'message' 	=>$error['message'] ,
+					'type' 		=>'db' ,
+					'status'	=>'001'
+				);
+				
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			$rows =  $query->result_array();
+			$query->free_result();
+			return $rows;
 		}
 		
 		public function getBalance($uid)

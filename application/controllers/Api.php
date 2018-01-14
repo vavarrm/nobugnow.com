@@ -15,6 +15,7 @@ class Api extends CI_Controller {
 		$this->load->model('User_Model', 'user');
 		$this->load->model('Log_Model', 'myLog');
 		$this->load->model('Announcemet_Model', 'announcemet');
+		$this->load->model('Bank_Model', 'bank');
 		$this->request = json_decode(trim(file_get_contents('php://input'), 'r'), true);
 		
 		$output['status'] = 100;
@@ -83,10 +84,85 @@ class Api extends CI_Controller {
 		}
     }
 	
-	public function setUserBankInfo()
+	
+	public function getRegisteredLink()
+	{
+		$output['status'] = 100;
+		$output['body'] =array(
+			'affected_rows' =>0
+		);
+		$output['title'] ='取得注册连结';
+		$output['message'] = '成功取得';
+		try 
+		{
+			$output['body']= $this->user->getRegisteredLink($this->_user['u_id']);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+			$this->myLog->error_log($parames);
+		}
+		
+		$this->response($output);
+	}
+	
+	public function addRegisteredLink()
+	{
+		$output['status'] = 100;
+		$output['body'] =array(
+			'affected_rows' =>0
+		);
+		$output['title'] ='新增注册连结';
+		$output['message'] = '成功新增';
+		try 
+		{
+			$output['body']= $this->user->addRegisteredLink($this->_user['u_id']);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+			$this->myLog->error_log($parames);
+		}
+		
+		$this->response($output);
+	}
+	
+	public function setUserBankInfoForm()
 	{
 		$output['status'] = 100;
 		$output['body'] =array();
+		$output['title'] ='成功取得绑定页面';
+		$output['message'] = '成功取得';
+		try 
+		{
+			$output['body']['bank_list'] = $this->bank->getBankList();
+			$output['body']['user_bank_list'] = $this->user->getUserBankInfoByID($this->_user['u_id']);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+			$this->myLog->error_log($parames);
+		}
+		
+		$this->response($output);
+	}
+	
+	
+	public function setUserBankInfo()
+	{
+		$output['status'] = 100;
+		$output['body'] =array(
+			'affected_rows'	=>0
+		);
 		$output['title'] ='设定银行卡资料';
 		$output['message'] = '设定成功';
 		
@@ -170,11 +246,21 @@ class Api extends CI_Controller {
 				throw $MyException;
 			}
 			
-			
+			if (!is_numeric($this->request['account']) || strlen($this->request['account']) <16 || strlen($this->request['account']) >19)
+			{
+				$array = array(
+					'message' 	=>'银行卡号为16～19位数字组成' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
 			
 			$ary['u_id']=$this->_user['u_id'];
 			$ary = array_merge($ary,$this->request);
-			$this->user->setBankInfo($ary);
+			$output['body']['affected_rows'] = 	$this->user->setBankInfo($ary);
 		}catch(MyException $e)
 		{
 			$parames = $e->getParams();
@@ -561,8 +647,7 @@ class Api extends CI_Controller {
 			if(
 				$this->request['name']	==""|| 
 				$this->request['account']	==""|| 
-				$this->request['passwd']	=="" ||
-				$this->request['superior']	=="" 
+				$this->request['passwd']	=="" 
 			){
 				$array = array(
 					'message' 	=>'reponse 必傳參數為空' ,
@@ -618,7 +703,7 @@ class Api extends CI_Controller {
 				throw $MyException;
 			}
 			
-			if(intval($this->request['superior']) <=0){
+			if(intval($this->request['superior']) ==0){
 				$array = array(
 					'message' 	=>'無法註冊總代號' ,
 					'type' 		=>'api' ,
@@ -643,7 +728,7 @@ class Api extends CI_Controller {
 			}
 			
 			$ary =array(
-				'superior_id'	=>$this->request['superior'],
+				'superior_id'	=>$this->$_user['u_id'],
 				'u_name'		=>$this->request['name'],
 				'u_account'		=>$this->request['account'],
 				'u_passwd'		=>md5($this->request['passwd']),
