@@ -45,7 +45,6 @@ class Api extends CI_Controller {
 				}	
 				
 				$encrypt_user_data = $this->session->userdata('encrypt_user_data');
-			
 				if(empty($encrypt_user_data)){
 					$array = array(
 						'message' 	=>'尚未登入' ,
@@ -83,6 +82,111 @@ class Api extends CI_Controller {
 			exit;
 		}
     }
+	
+	public function setUserBankInfo()
+	{
+		$output['status'] = 100;
+		$output['body'] =array();
+		$output['title'] ='设定银行卡资料';
+		$output['message'] = '设定成功';
+		
+		try 
+		{
+			if(
+				$this->request['account']	==""||
+				$this->request['account_name']	==""||
+				$this->request['bank_id']	==""||
+				$this->request['province']	==""||
+				$this->request['city']	==""||
+				$this->request['branch_name']	==""
+			){
+				$array = array(
+					'message' 	=>'reponse 必傳參數為空' ,
+					'type' 		=>'api' ,
+					'status'	=>'002'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}	
+			
+			if (mb_strlen($this->request['province'],"utf-8") == strlen($this->request['province']))
+			{
+				$array = array(
+					'message' 	=>'开户银行省份必須為簡體中文' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if (mb_strlen($this->request['city'],"utf-8") == strlen($this->request['city']))
+			{
+				$array = array(
+					'message' 	=>'开户银行城市必須為簡體中文' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if (mb_strlen($this->request['account_name'],"utf-8") == strlen($this->request['account_name']))
+			{
+				$array = array(
+					'message' 	=>'开户人姓名必須為中文' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if (mb_strlen($this->request['branch_name'],"utf-8") == strlen($this->request['branch_name']))
+			{
+				$array = array(
+					'message' 	=>'支行名称必須為簡體中文' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			if (mb_strlen($this->request['branch_name'],"utf-8") <=0 || mb_strlen($this->request['branch_name'],"utf-8") >20)
+			{
+				$array = array(
+					'message' 	=>'支行名称長度為1-20個字符串' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			
+			
+			$ary['u_id']=$this->_user['u_id'];
+			$ary = array_merge($ary,$this->request);
+			$this->user->setBankInfo($ary);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$this->myLog->error_log($parames);
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+		}
+		
+		$this->response($output);
+	}
 	
 	public function getAnnouncemetList()
 	{
