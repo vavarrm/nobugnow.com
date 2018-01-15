@@ -84,18 +84,62 @@ class Api extends CI_Controller {
 		}
     }
 	
+	public function sendSubordinateUserMessage()
+	{
+		$output['status'] = 100;
+		$output['body'] =array();
+		$output['title'] ='传送站内信';
+		$output['message'] = '传送成功';
+		try 
+		{
+			if(
+				$this->request['account']	=="" ||
+				$this->request['send_all_subordinate']	==="" ||  
+				$this->request['title']	==""  ||
+				$this->request['content']	==""  
+			){
+				$array = array(
+					'message' 	=>'reponse 必傳參數為空' ,
+					'type' 		=>'api' ,
+					'status'	=>'002'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}	
+			
+			if($this->request['send_all_subordinate'] ==0)
+			{
+				$account_ary = array( $this->request['account']);
+			
+			}else
+			{
+				$account_ary = $this->user->getAllSubordinateUser($this->_user['u_id']);
+			}
+			
+			$this->user->addSubordinateUserMmessage($this->_user['u_id'], $account_ary ,htmlentities($this->request['title']) , htmlentities($this->request['content']));
+			
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$this->myLog->error_log($parames);
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+		}
+		
+		$this->response($output);
+	}
 	
 	public function getRegisteredLink()
 	{
 		$output['status'] = 100;
-		$output['body'] =array(
-			'affected_rows' =>0
-		);
 		$output['title'] ='取得注册连结';
 		$output['message'] = '成功取得';
 		try 
 		{
-			$output['body']= $this->user->getRegisteredLink($this->_user['u_id']);
+			$output['body']['list']= $this->user->getRegisteredLink($this->_user['u_id']);
 		}catch(MyException $e)
 		{
 			$parames = $e->getParams();
@@ -276,16 +320,42 @@ class Api extends CI_Controller {
 	
 	public function getAnnouncemetList()
 	{
-		
+		$get= $this->input->get();
 		$output['status'] = 100;
 		$output['body'] =array();
 		$output['title'] ='取得公告列表';
 		$output['message'] = '成功取得';
-		$ary['limit'] = (isset($this->request['limit']))?$this->request['limit']:5;
-		$ary['p'] = (isset($this->request['p']))?$this->request['p']:1;
+		$ary['limit'] = (isset($get['limit']))?$get['limit']:5;
+		$ary['p'] = (isset($get['p']))?$get['p']:1;
 		try 
 		{
 			$output['body'] = $this->announcemet->getList($ary);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+			$this->myLog->error_log($parames);
+		}
+		
+		$this->response($output);
+	}
+	
+	public function getUserMessageList()
+	{
+		$get= $this->input->get();
+		$output['status'] = 100;
+		$output['body'] =array();
+		$output['title'] ='取得站内讯息列表';
+		$output['message'] = '成功取得';
+		$ary['limit'] = (isset($get['limit']))?$get['limit']:5;
+		$ary['p'] = (isset($get['p']))?$get['p']:1;
+		$ary['um_u_id'] = array('value'=>$this->_user['u_id'], 'operator' =>'=');
+		try 
+		{
+			$output['body'] = $this->user->getMessageList($ary);
 		}catch(MyException $e)
 		{
 			$parames = $e->getParams();
@@ -635,7 +705,7 @@ class Api extends CI_Controller {
 		$this->response($output);
 	}
 	
-	public function registered()
+	public function registered($rl_id='')
 	{
 		$output['status'] = '100';
 		$output['message'] = '註冊成功'; 
@@ -647,7 +717,8 @@ class Api extends CI_Controller {
 			if(
 				$this->request['name']	==""|| 
 				$this->request['account']	==""|| 
-				$this->request['passwd']	=="" 
+				$this->request['passwd']	=="" ||
+				$rl_id ==""
 			){
 				$array = array(
 					'message' 	=>'reponse 必傳參數為空' ,
@@ -703,9 +774,11 @@ class Api extends CI_Controller {
 				throw $MyException;
 			}
 			
-			if(intval($this->request['superior']) ==0){
+			$registeredLink =$this->user->getRegisteredLinkByID($rl_id);
+			
+			if( empty($registeredLink )){
 				$array = array(
-					'message' 	=>'無法註冊總代號' ,
+					'message' 	=>'注册连结无效' ,
 					'type' 		=>'api' ,
 					'status'	=>'999'
 				);
@@ -728,7 +801,7 @@ class Api extends CI_Controller {
 			}
 			
 			$ary =array(
-				'superior_id'	=>$this->$_user['u_id'],
+				'superior_id'	=>$registeredLink['u_id'],
 				'u_name'		=>$this->request['name'],
 				'u_account'		=>$this->request['account'],
 				'u_passwd'		=>md5($this->request['passwd']),
