@@ -477,6 +477,145 @@
 			return $rows;
 		}
 		
+		public function  getUserBySuperiorID($id)
+		{
+			$sql = "SELECT *  FROM  user WHERE u_superior_id =?";
+			$bind = array(
+				$id,
+			);
+			$query = $this->db->query($sql, $bind);
+			
+			$error = $this->db->error();
+			if($error['message'] !="")
+			{
+				$MyException = new MyException();
+				$array = array(
+					'message' 	=>$error['message'] ,
+					'type' 		=>'db' ,
+					'status'	=>'001'
+				);
+				
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			$rows =  $query->result_array();
+			$query->free_result();
+			return $rows;
+		}
+		
+		public function getUserMessageByID($id, $u_id)
+		{
+			$sql = "SELECT *   FROM user_message WHERE um_id= ? AND um_u_id =?";
+			$bind = array(
+				$id,
+				$u_id
+			);
+			$query = $this->db->query($sql, $bind);
+			
+			$error = $this->db->error();
+			if($error['message'] !="")
+			{
+				$MyException = new MyException();
+				$array = array(
+					'message' 	=>$error['message'] ,
+					'type' 		=>'db' ,
+					'status'	=>'001'
+				);
+				
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			$row =  $query->row_array();
+			$query->free_result();
+			
+			if(!empty($row) && $row['um_is_read'] ==0)
+			{
+				$sql ="UPDATE user_message set 	um_is_read ='1' WHERE um_id =? AND um_u_id=?"; 
+				$query = $this->db->query($sql, $bind);
+				
+				$error = $this->db->error();
+				if($error['message'] !="")
+				{
+					$MyException = new MyException();
+					$array = array(
+						'message' 	=>$error['message'] ,
+						'type' 		=>'db' ,
+						'status'	=>'001'
+					);
+					
+					$MyException->setParams($array);
+					throw $MyException;
+				}
+			}
+			
+			return $row;
+		}
+		
+		public function  addSuperiorUserMmessage($ary=array())
+		{
+			try 
+			{
+				
+				$user = $this->getUsetByID($ary['u_id']);
+				if(empty($user))
+				{
+					$MyException = new MyException();
+					$array = array(
+						'message' 	=>'无此使用者' ,
+						'type' 		=>'api' ,
+						'status'	=>'999'
+					);
+					
+					$MyException->setParams($array);
+					throw $MyException;
+				}
+				
+				if($user['u_superior_id'] === 0)
+				{
+					$MyException = new MyException();
+					$array = array(
+						'message' 	=>'总代用互无上级',
+						'type' 		=>'api' ,
+						'status'	=>'999'
+					);
+					
+					$MyException->setParams($array);
+					throw $MyException;
+				}
+				
+				
+				$sql =" INSERT INTO user_message(um_u_id, um_title, um_content, um_add_datetime, um_from_u_id)
+				        VALUES(?,?,NOW(),?,?)";
+				
+				$bind = array(
+					$user['u_superior_id'],
+					$ary['title'],
+					$ary['content'],
+					$ary['u_id'],
+				);
+				$query = $this->db->query($sql, $bind);
+				$error = $this->db->error();
+				if($error['message'] !="")
+				{
+					$MyException = new MyException();
+					$array = array(
+						'message' 	=>$error['message'] ,
+						'type' 		=>'db' ,
+						'status'	=>'001'
+					);
+					
+					$MyException->setParams($array);
+					throw $MyException;
+				}
+
+				return $this->db->affected_rows() ;
+				
+			}catch(MyException $e)
+			{
+				throw $e;
+			}
+		}
+		
 		public function  addSubordinateUserMmessage($u_superior_id, $u_account=array(), $title, $content)
 		{
 			try 
@@ -492,14 +631,16 @@
 					
 					$MyException->setParams($array);
 					throw $MyException;
+					
 				}
+				
 				
 				$subordinateUser= $this->getSubordinateUserByAccount($u_superior_id, $u_account);
 				if(empty($subordinateUser))
 				{
 					$MyException = new MyException();
 					$array = array(
-						'message' 	=>'无下级使用者' ,
+						'message' 	=>'无此下级使用者' ,
 						'type' 		=>'db' ,
 						'status'	=>'999'
 					);
@@ -586,9 +727,11 @@
 				return false;
 			}
 			
+			
 			$u_account_str = join("','", $u_account);
 			
 			$sql = sprintf("SELECT *  FROM user WHERE u_superior_id =? AND u_account IN ('%s')", $u_account_str);
+			// echo $sql;
 			$bind = array(
 				$u_superior_id
 			);

@@ -16,6 +16,7 @@ class Api extends CI_Controller {
 		$this->load->model('Log_Model', 'myLog');
 		$this->load->model('Announcemet_Model', 'announcemet');
 		$this->load->model('Bank_Model', 'bank');
+		$this->load->model('UserAccount_Model', 'account');
 		$this->request = json_decode(trim(file_get_contents('php://input'), 'r'), true);
 		
 		$output['status'] = 100;
@@ -84,11 +85,187 @@ class Api extends CI_Controller {
 		}
     }
 	
+	public function withdrawal()
+	{
+		$output['status'] = 100;
+		$output['body'] =array(
+			'affected_rows' =>0
+		);
+		$output['title'] ='取款';
+		$output['message'] = '成功';
+		try 
+		{
+			if(
+				$this->request['quota']	==""  ||
+				$this->request['ub_id']	==''
+		
+			){
+				$array = array(
+					'message' 	=>'reponse 必傳參數為空' ,
+					'type' 		=>'api' ,
+					'status'	=>'002'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}	
+			
+			if(
+				$this->request['quota']	<=0  
+			){
+				$array = array(
+					'message' 	=>'提款额必须大于0' ,
+					'type' 		=>'api' ,
+					'status'	=>'002'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			$ary = array(
+				'u_id' =>$this->_user['u_id'],
+				'quota'=>$this->request['quota'],
+				'ub_id'	=>$this->request['ub_id']
+			);
+			$output['body']['affected_rows']=$this->account->withdrawal($ary);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$this->myLog->error_log($parames);
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+		}
+		
+		$this->response($output);
+	}
+	
+	public function getUserMessageForm()
+	{
+		$output['status'] = 100;
+		$output['body'] =array(
+		);
+		$output['title'] ='站内信表单';
+		$output['message'] = '成功';
+		try 
+		{
+			$output['body']['subordinate'] = $this->user->getUserBySuperiorID($this->_user['u_id']);
+			$output['body']['superior'] = $this->user->getUsetByID($this->_user['u_superior_id']);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$this->myLog->error_log($parames);
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+		}
+		
+		$this->response($output);
+	}
+	
+	public function getUserMessage()
+	{
+		$output['status'] = 100;
+		$output['body'] =array(
+		);
+		$output['title'] ='读取站内信';
+		$output['message'] = '读取成功';
+		try 
+		{
+			if(
+				$this->request['um_id']	==""  
+			){
+				$array = array(
+					'message' 	=>'reponse 必傳參數為空' ,
+					'type' 		=>'api' ,
+					'status'	=>'002'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}	
+			
+			$output['body']['row']=$this->user->getUserMessageByID($this->request['um_id'], $this->_user['u_id']);
+			
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$this->myLog->error_log($parames);
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+		}
+		
+		$this->response($output);
+	}
+	
+	public function sendSuperiorUserMessage()
+	{
+		$output['status'] = 100;
+		$output['body'] =array(
+			'affected_rows'	=>0
+		);
+		$output['title'] ='传送站内信给上级';
+		$output['message'] = '传送成功';
+		try 
+		{
+			if(
+				$this->request['title']	==""  ||
+				$this->request['content']	==""  
+			){
+				$array = array(
+					'message' 	=>'reponse 必傳參數為空' ,
+					'type' 		=>'api' ,
+					'status'	=>'002'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}	
+			
+			if($this->_user['u_superior_id'] == 0)
+			{
+				$array = array(
+					'message' 	=>'总代用互无上级',
+					'type' 		=>'api' ,
+					'status'	=>'999'
+				);
+				$MyException = new MyException();
+				$MyException->setParams($array);
+				throw $MyException;
+			}
+			
+			$ary = array(
+				'u_id' =>$this->_user['u_id'],
+				'title' =>$this->request['title'],
+				'content' =>$this->request['content'],
+			);
+			$output['body']['affected_rows']=$this->user->addSuperiorUserMmessage($ary);
+			
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$this->myLog->error_log($parames);
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+		}
+		
+		$this->response($output);
+	}
+	
 	public function sendSubordinateUserMessage()
 	{
 		$output['status'] = 100;
-		$output['body'] =array();
-		$output['title'] ='传送站内信';
+		$output['body'] =array(
+			'affected_rows'	=>0
+		);
+		$output['title'] ='传送站内信给下级';
 		$output['message'] = '传送成功';
 		try 
 		{
@@ -114,10 +291,26 @@ class Api extends CI_Controller {
 			
 			}else
 			{
-				$account_ary = $this->user->getAllSubordinateUser($this->_user['u_id']);
+				$rows= $this->user->getAllSubordinateUser($this->_user['u_id']);
+				if(empty($rows))
+				{
+					$array = array(
+					'message' 	=>'无下级用户' ,
+					'type' 		=>'api' ,
+					'status'	=>'999'
+					);
+					$MyException = new MyException();
+					$MyException->setParams($array);
+					throw $MyException;
+				}
+				foreach ($rows as $row)
+				{
+					$account_ary[] = $row['u_account'];
+				}
 			}
 			
-			$this->user->addSubordinateUserMmessage($this->_user['u_id'], $account_ary ,htmlentities($this->request['title']) , htmlentities($this->request['content']));
+			$affected_rows = $this->user->addSubordinateUserMmessage($this->_user['u_id'], $account_ary ,htmlentities($this->request['title']) , htmlentities($this->request['content']));
+			$output['body']['affected_rows']=$affected_rows;
 			
 		}catch(MyException $e)
 		{
@@ -509,6 +702,80 @@ class Api extends CI_Controller {
 		$this->response($output);
 	}
 	
+	public function report()
+	{
+		$output['status'] = 100;
+		$output['body'] =array();
+		$output['title'] ='日常记录-提款';
+		$output['message'] = '成功';
+		$get= $this->input->get();
+		$ary['limit'] = (isset($get['limit']))?$get['limit']:5;
+		$ary['p'] = (isset($get['p']))?$get['p']:1;
+		$type= (isset($get['type']))?$get['type']:'';
+		try 
+		{
+			if(
+					$type	==""
+			){
+					$array = array(
+						'message' 	=>'reponse 必傳參數為空' ,
+						'type' 		=>'api' ,
+						'status'	=>'002'
+					);
+					$MyException = new MyException();
+					$MyException->setParams($array);
+					throw $MyException;
+			}	
+			$ary['ua_type']=array(
+				'value' =>$type,
+				'operator' =>'='
+			);
+			$ary['ua_u_id']=array(
+				'value' =>$this->_user['u_id'],
+				'operator' =>'='
+			);
+			
+			$output['body'] = $this->account->getReportList($ary);
+			
+		}
+		catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+			$this->myLog->error_log($parames);
+		}
+		
+		$this->response($output);
+	}
+	
+	public function withdrawalForm()
+	{
+		$output['status'] = 100;
+		$output['body'] =array();
+		$output['title'] ='提款申请表单';
+		$output['message'] = '成功';
+		
+		try 
+		{
+			$row = $this->account->getBalance($this->_user['u_id']);
+			$output['body']= $row;
+			$output['body']['user_bank_list'] = $this->user->getUserBankInfoByID($this->_user['u_id']);
+		}catch(MyException $e)
+		{
+			$parames = $e->getParams();
+			$parames['class'] = __CLASS__;
+			$parames['function'] = __function__;
+			$output['message'] = $parames['message']; 
+			$output['status'] = $parames['status']; 
+			$this->myLog->error_log($parames);
+		}
+		
+		$this->response($output);
+	}
+	
 	public function getuserBalance()
 	{
 		$output['status'] = 100;
@@ -519,7 +786,7 @@ class Api extends CI_Controller {
 		try 
 		{
 			
-			$row = $this->user->getBalance($this->_user['u_id']);
+			$row = $this->account->getBalance($this->_user['u_id']);
 			$output['body']= $row;
 		}catch(MyException $e)
 		{
