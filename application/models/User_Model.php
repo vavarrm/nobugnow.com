@@ -324,6 +324,8 @@
 			return $row;
 		}
 		
+		
+		
 		public function getUserBankInfoByID($u_id)
 		{
 			$sql="SELECT * FROM user_bank_info WHERE ub_u_id = ?";

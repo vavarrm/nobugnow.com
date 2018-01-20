@@ -13,6 +13,7 @@ class Api extends CI_Controller {
 
 		$get = $this->input->get();
 		$this->load->model('User_Model', 'user');
+		$this->load->helper('captcha');
 		$this->load->model('Log_Model', 'myLog');
 		$this->load->model('Announcemet_Model', 'announcemet');
 		$this->load->model('Bank_Model', 'bank');

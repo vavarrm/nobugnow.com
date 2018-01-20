@@ -13,8 +13,14 @@
 			try 
 			{
 				
-				$sql ="SELECT IFNULL(SUM(ua_value),0) as balance FROM user_account WHERE ua_u_id =? AND ua_status = 'allowed'";
+				$sql ="
+						SELECT   IFNULL(SUM(Balance),0)  AS balance FROM  (
+							SELECT ua_id , IFNULL(ua_value,0) AS Balance FROM user_account WHERE ua_u_id = ? AND ua_status = 'recorded'
+							UNION
+							SELECT ua_id , IFNULL(ua_value,0)*-1  AS Balance FROM user_account WHERE  ua_u_id = ? AND ua_status = 'payment'
+						) AS t";
 				$bind = array(
+					$u_id,
 					$u_id
 				);
 				$query = $this->db->query($sql, $bind);
@@ -114,7 +120,7 @@
 				$sql ="INSERT INTO user_account(ua_value, ua_type, ua_add_datetime,ua_u_id, ua_ub_id)
 					   VALUE(?,3,NOW(),?,?)";
 				$bind = array(
-					$ary['quota'] *-1,
+					$ary['quota'],
 					$ary['u_id'],
 					$ary['ub_id']
 				);
